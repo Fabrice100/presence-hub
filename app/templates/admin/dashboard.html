@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}PresenceHub | Dashboard Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Dashboard Administrateur</h2>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Employés</h5>
+                    <h2>{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Présents</h5>
+                    <h2>{{ stats.presents }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Absents</h5>
+                    <h2>{{ stats.absents }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Retards</h5>
+                    <h2>{{ stats.retards }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des employés -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Liste des employés</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Matricule</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Département</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employe in employes %}
+                    <tr>
+                        <td>{{ employe.matricule }}</td>
+                        <td>{{ employe.nom }}</td>
+                        <td>{{ employe.prenom }}</td>
+                        <td>{{ employe.departement }}</td>
+                        <td>
+                            {% if employe.is_active %}
+                            <span class="badge bg-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

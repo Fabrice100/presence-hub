@@ -1,0 +1,30 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+
+# Flask
+instance/
+.webassets-cache
+
+# Environnement
+.env
+.venv
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# Base de données
+*.db
+*.sqlite3
+
+# Logs
+*.log
