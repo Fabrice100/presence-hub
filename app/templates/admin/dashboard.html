@@ -4,79 +4,193 @@
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">Dashboard Administrateur</h2>
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+            Dashboard Administrateur
+        </h2>
+        <a href="{{ url_for('admin.add_employee') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Nouvel Employé
+        </a>
+    </div>
 
     <!-- Statistiques -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Total Employés</h5>
-                    <h2>{{ stats.total }}</h2>
+                    <h5 class="card-title">
+                        <i class="fas fa-users me-2"></i>Total Employés
+                    </h5>
+                    <h2 class="mb-0">{{ stats.total }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Présents</h5>
-                    <h2>{{ stats.presents }}</h2>
+                    <h5 class="card-title">
+                        <i class="fas fa-user-check me-2"></i>Présents
+                    </h5>
+                    <h2 class="mb-0">{{ stats.presents }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-danger text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Absents</h5>
-                    <h2>{{ stats.absents }}</h2>
+                    <h5 class="card-title">
+                        <i class="fas fa-user-times me-2"></i>Absents
+                    </h5>
+                    <h2 class="mb-0">{{ stats.absents }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card bg-warning text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Retards</h5>
-                    <h2>{{ stats.retards }}</h2>
+                    <h5 class="card-title">
+                        <i class="fas fa-clock me-2"></i>Retards
+                    </h5>
+                    <h2 class="mb-0">{{ stats.retards }}</h2>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        {{ search_form.search(class="form-control", placeholder="Rechercher par nom, matricule...") }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    {{ search_form.departement(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ search_form.status(class="form-select") }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Filtrer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Liste des employés -->
     <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Liste des employés</h5>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list text-primary me-2"></i>
+                Liste des Employés
+            </h5>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Export Excel
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Export PDF
+                </button>
+            </div>
         </div>
         <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Matricule</th>
-                        <th>Nom</th>
-                        <th>Prénom</th>
-                        <th>Département</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for employe in employes %}
-                    <tr>
-                        <td>{{ employe.matricule }}</td>
-                        <td>{{ employe.nom }}</td>
-                        <td>{{ employe.prenom }}</td>
-                        <td>{{ employe.departement }}</td>
-                        <td>
-                            {% if employe.is_active %}
-                            <span class="badge bg-success">Actif</span>
-                            {% else %}
-                            <span class="badge bg-danger">Inactif</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Matricule</th>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Email</th>
+                            <th>Département</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.matricule }}</td>
+                            <td>{{ employee.nom }}</td>
+                            <td>{{ employee.prenom }}</td>
+                            <td>{{ employee.email }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ employee.departement }}</span>
+                            </td>
+                            <td>
+                                {% if employee.is_active %}
+                                <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin.edit_employee', id=employee.id) }}" 
+                                       class="btn btn-sm btn-primary" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button onclick="toggleEmployee({{ employee.id }})"
+                                            class="btn btn-sm {% if employee.is_active %}btn-danger{% else %}btn-success{% endif %}"
+                                            title="{{ 'Désactiver' if employee.is_active else 'Activer' }}">
+                                        <i class="fas {% if employee.is_active %}fa-user-times{% else %}fa-user-check{% endif %}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEmployee(id) {
+    if (!confirm('Êtes-vous sûr de vouloir modifier le statut de cet employé ?')) {
+        return;
+    }
+    
+    fetch(`/admin/employee/${id}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+}
+
+function exportToExcel() {
+    // À implémenter
+    alert('Fonctionnalité en cours de développement');
+}
+
+function exportToPDF() {
+    // À implémenter
+    alert('Fonctionnalité en cours de développement');
+}
+</script>
 {% endblock %}

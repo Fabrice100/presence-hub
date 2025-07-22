@@ -3,6 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db
 from app.models.pointage import Pointage
+import random
+import string
 
 class User(UserMixin, db.Model):
     """Modèle pour les utilisateurs"""
@@ -58,6 +60,47 @@ class User(UserMixin, db.Model):
         if not dernier_pointage:
             return True, "arrivee"
         return True, "depart" if dernier_pointage.type == "arrivee" else "arrivee"
+
+    @classmethod
+    def create_employee(cls, form):
+        """Crée un nouvel employé à partir des données du formulaire"""
+        try:
+            # Génère un matricule et un mot de passe temporaire
+            matricule = cls.generate_matricule()
+            temp_password = cls.generate_temp_password()
+            
+            # Crée l'employé
+            employee = cls(
+                matricule=matricule,
+                nom=form.nom.data,
+                prenom=form.prenom.data,
+                email=form.email.data,
+                departement=form.departement.data,
+                role='employee',
+                premiere_connexion=True,
+                is_active=True
+            )
+            employee.set_password(temp_password)
+            
+            return employee, temp_password
+        except Exception as e:
+            print(f"Erreur création employé: {str(e)}")
+            return None, None
+
+    @staticmethod
+    def generate_matricule(prefix='EMP'):
+        """Génère un matricule unique"""
+        while True:
+            number = random.randint(1, 999)
+            matricule = f"{prefix}{number:03d}"
+            if not User.query.filter_by(matricule=matricule).first():
+                return matricule
+
+    @staticmethod
+    def generate_temp_password(length=10):
+        """Génère un mot de passe temporaire"""
+        characters = string.ascii_letters + string.digits + "!@#$%^&*"
+        return ''.join(random.choice(characters) for i in range(length))
 
     def __repr__(self):
         return f'<User {self.matricule}>'

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}PresenceHub | {{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas {% if employee %}fa-user-edit{% else %}fa-user-plus{% endif %} me-2"></i>
+                        {{ title }}
+                    </h4>
+                    {% if employee %}
+                    <span class="badge {% if employee.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ "Actif" if employee.is_active else "Inactif" }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Informations personnelles -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.nom.label(class="form-label") }}
+                                    {{ form.nom(class="form-control", placeholder="Entrez le nom") }}
+                                    {% if form.nom.errors %}
+                                        {% for error in form.nom.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.prenom.label(class="form-label") }}
+                                    {{ form.prenom(class="form-control", placeholder="Entrez le prénom") }}
+                                    {% if form.prenom.errors %}
+                                        {% for error in form.prenom.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact et Département -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.email.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        {{ form.email(class="form-control", placeholder="exemple@email.com") }}
+                                    </div>
+                                    {% if form.email.errors %}
+                                        {% for error in form.email.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    {{ form.departement.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-building"></i>
+                                        </span>
+                                        {{ form.departement(class="form-select") }}
+                                    </div>
+                                    {% if form.departement.errors %}
+                                        {% for error in form.departement.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statut du compte (uniquement en modification) -->
+                        {% if employee %}
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.is_active(class="form-check-input") }}
+                                {{ form.is_active.label(class="form-check-label") }}
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Un email sera envoyé à l'employé lors du changement de statut.
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {{ form.submit.label.text }}
+                            </button>
+                        </div>
+                    </form>
+
+                    {% if employee %}
+                    <!-- Informations supplémentaires -->
+                    <div class="mt-4 pt-4 border-top">
+                        <h5 class="text-muted mb-3">Informations supplémentaires</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Matricule:</strong> {{ employee.matricule }}</p>
+                                <p><strong>Date de création:</strong> {{ employee.created_at.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Dernière connexion:</strong> 
+                                    {% if employee.last_login %}
+                                        {{ employee.last_login.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        Jamais connecté
+                                    {% endif %}
+                                </p>
+                                <p><strong>Première connexion:</strong> 
+                                    {% if employee.premiere_connexion %}
+                                        <span class="text-warning">En attente</span>
+                                    {% else %}
+                                        <span class="text-success">Effectuée</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Validation personnalisée du formulaire
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+</script>
+{% endblock %}
