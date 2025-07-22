@@ -94,12 +94,12 @@
                 Liste des Employés
             </h5>
             <div class="btn-group">
-                <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel me-2"></i>Export Excel
-                </button>
-                <button class="btn btn-outline-danger btn-sm" onclick="exportToPDF()">
-                    <i class="fas fa-file-pdf me-2"></i>Export PDF
-                </button>
+                <a href="{{ url_for('admin.export_data', format='excel') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel me-1"></i>Export Excel
+                </a>
+                <a href="{{ url_for('admin.export_data', format='pdf') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-file-pdf me-1"></i>Export PDF
+                </a>
             </div>
         </div>
         <div class="card-body">
@@ -154,6 +154,21 @@
         </div>
     </div>
 </div>
+
+<!-- Modal de chargement -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <h5 class="modal-title">Génération du fichier en cours...</h5>
+                <p class="text-muted mb-0">Veuillez patienter...</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -183,14 +198,18 @@ function toggleEmployee(id) {
     });
 }
 
-function exportToExcel() {
-    // À implémenter
-    alert('Fonctionnalité en cours de développement');
-}
-
-function exportToPDF() {
-    // À implémenter
-    alert('Fonctionnalité en cours de développement');
-}
+// Gestion du modal de chargement pour les exports
+document.addEventListener('DOMContentLoaded', function() {
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Afficher le modal lors du clic sur les boutons d'export
+    document.querySelectorAll('[href*="export_data"]').forEach(button => {
+        button.addEventListener('click', () => {
+            loadingModal.show();
+            // Cacher le modal après 3 secondes (temps moyen de génération)
+            setTimeout(() => loadingModal.hide(), 3000);
+        });
+    });
+});
 </script>
 {% endblock %}

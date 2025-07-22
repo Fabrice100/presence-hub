@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_required, current_user
 from app import db
 from app.models.user import User
 from app.models.pointage import Pointage
 from app.forms.employee_forms import EmployeeForm, SearchForm
 from app.services.email_service import send_welcome_email, send_status_change_email
+from app.services.export_service import export_to_excel, export_to_pdf
 from datetime import datetime
 import logging
 
@@ -63,6 +64,50 @@ def dashboard():
         logger.error(f'Erreur dashboard admin: {str(e)}')
         flash('Une erreur s\'est produite lors du chargement du dashboard.', 'danger')
         return redirect(url_for('auth.login'))
+
+@admin_bp.route('/admin/export/<format>')
+@login_required
+def export_data(format):
+    """Export des données en Excel ou PDF"""
+    if current_user.role != 'admin':
+        flash('Accès non autorisé.', 'danger')
+        return redirect(url_for('auth.login'))
+
+    try:
+        # Récupération des données
+        employees = User.query.filter_by(role='employee').order_by(User.nom).all()
+        pointages = Pointage.query.filter(
+            Pointage.date == datetime.now().date()
+        ).order_by(Pointage.heure.desc()).all()
+
+        if format == 'excel':
+            # Export Excel
+            excel_file = export_to_excel(employees, pointages)
+            return send_file(
+                excel_file,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=f'presencehub_export_{datetime.now().strftime("%Y%m%d")}.xlsx'
+            )
+            
+        elif format == 'pdf':
+            # Export PDF
+            pdf_file = export_to_pdf(employees, pointages)
+            return send_file(
+                pdf_file,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'presencehub_export_{datetime.now().strftime("%Y%m%d")}.pdf'
+            )
+            
+        else:
+            flash('Format d\'export non supporté.', 'danger')
+            return redirect(url_for('admin.dashboard'))
+            
+    except Exception as e:
+        logger.error(f'Erreur lors de l\'export {format}: {str(e)}')
+        flash(f'Une erreur est survenue lors de l\'export en {format.upper()}.', 'danger')
+        return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/admin/employee/add', methods=['GET', 'POST'])
 @login_required
