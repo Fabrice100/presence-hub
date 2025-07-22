@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     nom = db.Column(db.String(100), nullable=False)
     prenom = db.Column(db.String(100), nullable=False)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(255))  # Augmenté de 128 à 255
     role = db.Column(db.String(20), nullable=False)  # 'admin' ou 'employee'
     departement = db.Column(db.String(50))
     premiere_connexion = db.Column(db.Boolean, default=True)
