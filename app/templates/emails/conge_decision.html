@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* Mêmes styles que précédemment */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="background-color: {% if conge.statut == 'approuve' %}#28a745{% else %}#dc3545{% endif %};">
+            <h2>Décision sur votre Demande de Congé</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour {{ user.prenom }},</p>
+            
+            <p>Votre demande de congé a été <strong>{{ 'approuvée' if conge.statut == 'approuve' else 'refusée' }}</strong>.</p>
+            
+            <h3>Détails de la demande :</h3>
+            <ul>
+                <li><strong>Période :</strong> Du {{ conge.date_debut.strftime('%d/%m/%Y') }} au {{ conge.date_fin.strftime('%d/%m/%Y') }}</li>
+                <li><strong>Durée :</strong> {{ conge.duree }} jour(s)</li>
+                <li><strong>Motif :</strong> {{ conge.motif }}</li>
+            </ul>
+            
+            {% if conge.statut == 'approuve' %}
+            <p>Nous vous souhaitons d'excellents congés !</p>
+            {% else %}
+            <p>Pour plus d'informations, veuillez contacter votre responsable.</p>
+            {% endif %}
+            
+            <p>Cordialement,<br>L'équipe PresenceHub</p>
+        </div>
+        <div class="footer">
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

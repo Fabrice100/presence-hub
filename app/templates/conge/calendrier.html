@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}PresenceHub | Calendrier des Congés{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-calendar text-primary me-2"></i>
+            Calendrier des Congés
+        </h2>
+        <div>
+            {% if current_user.role != 'admin' %}
+            <a href="{{ url_for('conge.demande_conge') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-2"></i>Nouvelle Demande
+            </a>
+            {% endif %}
+            <a href="{{ url_for('conge.liste_conges') }}" class="btn btn-outline-primary">
+                <i class="fas fa-list me-2"></i>Vue Liste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge bg-warning">En attente</span>
+                    <span class="badge bg-success">Approuvé</span>
+                    <span class="badge bg-danger">Refusé</span>
+                </div>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour les détails -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails du Congé</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <strong>Employé:</strong>
+                    <span id="eventTitle" class="ms-2"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Période:</strong>
+                    <span id="eventDates" class="ms-2"></span>
+                </div>
+                <div class="mb-3">
+                    <strong>Statut:</strong>
+                    <span id="eventStatus" class="ms-2"></span>
+                </div>
+                <div>
+                    <strong>Motif:</strong>
+                    <p id="eventMotif" class="mt-2 mb-0"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        buttonText: {
+            today: "Aujourd'hui",
+            month: 'Mois',
+            week: 'Semaine'
+        },
+        events: {
+            url: '/api/conges/calendrier',
+            failure: function() {
+                alert('Erreur lors du chargement des événements');
+            }
+        },
+        eventDidMount: function(info) {
+            // Ajouter un tooltip avec le motif
+            info.el.title = info.event.extendedProps.motif;
+        },
+        eventClick: function(info) {
+            document.getElementById('eventTitle').textContent = info.event.title;
+            
+            // Ajuster les dates pour l'affichage
+            const dateDebut = new Date(info.event.start);
+            const dateFin = new Date(info.event.end);
+            dateFin.setDate(dateFin.getDate() - 1); // Soustraire un jour car FullCalendar utilise des dates exclusives
+            
+            const formatDate = (date) => {
+                return date.toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            };
+            
+            document.getElementById('eventDates').textContent = 
+                formatDate(dateDebut) + ' - ' + formatDate(dateFin);
+            
+            const status = info.event.extendedProps.status;
+            const statusElement = document.getElementById('eventStatus');
+            statusElement.textContent = status === 'en_attente' ? 'En attente' :
+                                      status === 'approuve' ? 'Approuvé' : 'Refusé';
+            statusElement.className = 'ms-2 badge ' + 
+                                    (status === 'en_attente' ? 'bg-warning' :
+                                     status === 'approuve' ? 'bg-success' : 'bg-danger');
+            
+            document.getElementById('eventMotif').textContent = info.event.extendedProps.motif;
+            
+            const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+            modal.show();
+        },
+        dayMaxEvents: true, // Permettre le "+plus" pour les jours avec beaucoup d'événements
+        displayEventTime: false, // Ne pas afficher l'heure
+        firstDay: 1, // Commencer la semaine le lundi
+        height: 'auto', // Hauteur automatique
+        loading: function(isLoading) {
+            // Ajouter un indicateur de chargement si nécessaire
+            if (isLoading) {
+                calendarEl.classList.add('loading');
+            } else {
+                calendarEl.classList.remove('loading');
+            }
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

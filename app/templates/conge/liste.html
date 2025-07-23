@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}PresenceHub | Congés{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-calendar-alt text-primary me-2"></i>
+            Gestion des Congés
+        </h2>
+        <div>
+            {% if current_user.role != 'admin' %}
+            <a href="{{ url_for('conge.demande_conge') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-2"></i>Nouvelle Demande
+            </a>
+            {% endif %}
+            <a href="{{ url_for('conge.calendrier') }}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar me-2"></i>Vue Calendrier
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list text-primary me-2"></i>
+                Liste des Demandes
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if conges %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% if current_user.role == 'admin' %}
+                            <th>Employé</th>
+                            {% endif %}
+                            <th>Date Début</th>
+                            <th>Date Fin</th>
+                            <th>Durée</th>
+                            <th>Motif</th>
+                            <th>Statut</th>
+                            {% if current_user.role == 'admin' %}
+                            <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for conge in conges %}
+                        <tr>
+                            {% if current_user.role == 'admin' %}
+                            <td>{{ conge.employe.prenom }} {{ conge.employe.nom }}</td>
+                            {% endif %}
+                            <td>{{ conge.date_debut.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ conge.date_fin.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ conge.duree }} jour(s)</td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 200px;" 
+                                      title="{{ conge.motif }}">
+                                    {{ conge.motif }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if conge.statut == 'en_attente' %}
+                                <span class="badge bg-warning">En attente</span>
+                                {% elif conge.statut == 'approuve' %}
+                                <span class="badge bg-success">Approuvé</span>
+                                {% else %}
+                                <span class="badge bg-danger">Refusé</span>
+                                {% endif %}
+                            </td>
+                            {% if current_user.role == 'admin' %}
+                            <td>
+                                {% if conge.statut == 'en_attente' %}
+                                <div class="btn-group">
+                                    <button onclick="updateStatut({{ conge.id }}, 'approuve')"
+                                            class="btn btn-sm btn-success"
+                                            title="Approuver">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button onclick="updateStatut({{ conge.id }}, 'refuse')"
+                                            class="btn btn-sm btn-danger"
+                                            title="Refuser">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times text-muted mb-3" style="font-size: 3rem;"></i>
+                <p class="text-muted mb-0">Aucune demande de congé trouvée.</p>
+                {% if current_user.role != 'admin' %}
+                <a href="{{ url_for('conge.demande_conge') }}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Faire une demande
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateStatut(id, statut) {
+    const action = statut === 'approuve' ? 'approuver' : 'refuser';
+    if (!confirm(`Êtes-vous sûr de vouloir ${action} cette demande ?`)) {
+        return;
+    }
+    
+    fetch(`/conges/${id}/statut`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ statut: statut })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+}
+</script>
+{% endblock %}

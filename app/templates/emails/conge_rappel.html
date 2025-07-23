@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* Mêmes styles que précédemment */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header" style="background-color: #17a2b8;">
+            <h2>Rappel : Congé à Venir</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour {{ user.prenom }},</p>
+            
+            <p>Nous vous rappelons que votre congé débute prochainement :</p>
+            
+            <ul>
+                <li><strong>Début :</strong> {{ conge.date_debut.strftime('%d/%m/%Y') }}</li>
+                <li><strong>Fin :</strong> {{ conge.date_fin.strftime('%d/%m/%Y') }}</li>
+                <li><strong>Durée :</strong> {{ conge.duree }} jour(s)</li>
+            </ul>
+            
+            <p>N'oubliez pas de :</p>
+            <ul>
+                <li>Mettre à jour vos tâches en cours</li>
+                <li>Configurer votre message d'absence</li>
+                <li>Informer vos collègues</li>
+            </ul>
+            
+            <p>Nous vous souhaitons d'excellents congés !</p>
+            
+            <p>Cordialement,<br>L'équipe PresenceHub</p>
+        </div>
+        <div class="footer">
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

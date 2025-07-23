@@ -1,0 +1,17 @@
+Confirmation de Demande de Congé
+
+Bonjour {{ user.prenom }},
+
+Nous confirmons la réception de votre demande de congé :
+
+- Période : Du {{ conge.date_debut.strftime('%d/%m/%Y') }} au {{ conge.date_fin.strftime('%d/%m/%Y') }}
+- Durée : {{ conge.duree }} jour(s)
+- Motif : {{ conge.motif }}
+
+Votre demande est actuellement en cours d'examen. Vous recevrez une notification dès qu'une décision sera prise.
+
+Cordialement,
+L'équipe PresenceHub
+
+---
+Cet email a été envoyé automatiquement, merci de ne pas y répondre.
