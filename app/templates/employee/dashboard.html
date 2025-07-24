@@ -38,6 +38,76 @@
         </div>
     </div>
 
+    <!-- Durée travaillée aujourd'hui avec badge intelligent -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-hourglass-half me-2"></i>Durée travaillée aujourd'hui
+                    </h5>
+                    {% set status, message = current_user.get_status_duree_jour() %}
+                    {% if status == "ok" %}
+                        <span class="badge bg-success fs-5">{{ message }}</span>
+                    {% elif status == "warning" %}
+                        <span class="badge bg-warning text-dark fs-5">{{ message }}</span>
+                    {% elif status == "danger" %}
+                    <span class="badge bg-danger fs-5">{{ message }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary fs-5">{{ message }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progression de la semaine -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">
+                        <i class="fas fa-chart-line me-2"></i>Progression semaine (objectif 40h)
+                    </h6>
+                    {% set status_sem, message_sem = current_user.get_status_semaine() %}
+                    <div class="progress mb-2" style="height: 25px;">
+                        <div class="progress-bar bg-{{ status_sem }}" 
+                            style="width: {{ current_user.get_progression_semaine() }}%">
+                            {{ message_sem }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title mb-2">
+                        <i class="fas fa-calendar-week me-2"></i>Total semaine
+                    </h6>
+                    <span class="badge bg-info fs-6">
+                        {{ total_semaine.seconds // 3600 + total_semaine.days * 24 }}h {{ (total_semaine.seconds // 60) % 60 }}min
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title mb-2">
+                        <i class="fas fa-calendar-alt me-2"></i>Total mois
+                    </h6>
+                    <span class="badge bg-info fs-6">
+                        {{ total_mois.seconds // 3600 + total_mois.days * 24 }}h {{ (total_mois.seconds // 60) % 60 }}min
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistiques -->
     <div class="row mb-4">
         <div class="col-md-4">

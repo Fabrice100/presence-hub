@@ -59,6 +59,30 @@
         </div>
     </div>
 
+    <!-- Alertes -->
+    {% if alertes.incomplets > 0 or alertes.moins_8h > 0 or alertes.semaine_retard > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <h6 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Alertes du jour
+                </h6>
+                <ul class="mb-0">
+                    {% if alertes.incomplets > 0 %}
+                    <li>{{ alertes.incomplets }} employé(s) avec pointage incomplet</li>
+                    {% endif %}
+                    {% if alertes.moins_8h > 0 %}
+                    <li>{{ alertes.moins_8h }} employé(s) ont fait moins de 8h aujourd'hui</li>
+                    {% endif %}
+                    {% if alertes.semaine_retard > 0 %}
+                    <li>{{ alertes.semaine_retard }} employé(s) en retard sur l'objectif semaine</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Filtres -->
     <div class="card mb-4">
         <div class="card-body">
@@ -113,6 +137,9 @@
                             <th>Email</th>
                             <th>Département</th>
                             <th>Statut</th>
+                            <th>Durée travaillée aujourd'hui</th>
+                            <th>Total semaine</th>
+                            <th>Total mois</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -133,6 +160,35 @@
                                 <span class="badge bg-danger">Inactif</span>
                                 {% endif %}
                             </td>
+
+                            <td>
+                                {% set status, message = employee.get_status_duree_jour() %}
+                                {% if status == "ok" %}
+                                    <span class="badge bg-success">{{ message }}</span>
+                                {% elif status == "warning" %}
+                                    <span class="badge bg-warning text-dark">{{ message }}</span>
+                                {% elif status == "danger" %}
+                                    <span class="badge bg-danger">{{ message }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ message }}</span>
+                                {% endif %}
+                            </td>
+
+                            
+
+                            <td>
+                                {% set tsem = totaux_semaine[employee.id] %}
+                                <span class="badge bg-info">
+                                    {{ tsem.seconds // 3600 + tsem.days * 24 }}h {{ (tsem.seconds // 60) % 60 }}min
+                                </span>
+                            </td>
+                            <td>
+                                {% set tmois = totaux_mois[employee.id] %}
+                                <span class="badge bg-info">
+                                    {{ tmois.seconds // 3600 + tmois.days * 24 }}h {{ (tmois.seconds // 60) % 60 }}min
+                                </span>
+                            </td>
+
                             <td>
                                 <div class="btn-group">
                                     <a href="{{ url_for('admin.edit_employee', id=employee.id) }}" 

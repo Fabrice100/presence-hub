@@ -55,10 +55,27 @@ def dashboard():
         # Récupération des employés
         employees = query.order_by(User.nom).all()
         
+        # Calcul des durées travaillées pour chaque employé
+        durees = {e.id: e.get_duree_travail_jour() for e in employees}
+        totaux_semaine = {e.id: e.get_total_heures_semaine() for e in employees}
+        totaux_mois = {e.id: e.get_total_heures_mois() for e in employees}
+        
+        # Statistiques des alertes
+        alertes = {
+            'incomplets': sum(1 for e in employees if not e.get_duree_travail_jour()),
+            'moins_8h': sum(1 for e in employees if e.get_duree_travail_jour() and (e.get_duree_travail_jour().seconds // 3600) < 8),
+            'semaine_retard': sum(1 for e in employees if e.get_progression_semaine() < 80)
+        }
+        
         return render_template('admin/dashboard.html',
                              stats=stats,
                              employees=employees,
+                             durees=durees,
+                             totaux_semaine=totaux_semaine,
+                             totaux_mois=totaux_mois,
+                             alertes=alertes,
                              search_form=search_form)
+        
                              
     except Exception as e:
         logger.error(f'Erreur dashboard admin: {str(e)}')

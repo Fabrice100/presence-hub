@@ -21,10 +21,18 @@ def dashboard():
 
     # Récupérer l'historique des pointages
     historique = Pointage.get_user_pointages_today(current_user.id)
+    
+    # Calcul de la durée travaillée aujourd'hui et des totaux
+    duree_travail = current_user.get_duree_travail_jour()
+    total_semaine = current_user.get_total_heures_semaine()
+    total_mois = current_user.get_total_heures_mois()
 
     return render_template('employee/dashboard.html',
                          stats=stats,
-                         historique=historique)
+                         historique=historique,
+                         duree_travail=duree_travail,
+                         total_semaine=total_semaine,
+                         total_mois=total_mois)
 
 @employee_bp.route('/employee/pointer', methods=['POST'])
 @login_required

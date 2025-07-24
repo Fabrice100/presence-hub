@@ -24,6 +24,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
+    print("DB URI:", app.config["SQLALCHEMY_DATABASE_URI"])
+    
     # Initialisation des extensions avec l'app
     db.init_app(app)
     login_manager.init_app(app)
@@ -55,6 +57,7 @@ def create_app():
         # Création des tables
         db.create_all()
         
+        print("Tables créées (ou déjà existantes)")
         # Création d'un admin par défaut si aucun n'existe
         try:
             if not User.query.filter_by(role='admin').first():
