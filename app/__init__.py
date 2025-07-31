@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
 from .config import Config
 import logging
 
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+csrf = CSRFProtect()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -30,6 +32,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
     
     # Configuration du login manager
     login_manager.login_view = 'auth.login'
@@ -38,7 +41,7 @@ def create_app():
     
     with app.app_context():
         # Import des modèles
-        from .models.user import User
+        from .models.user import User, LoginAttempt
         from .models.pointage import Pointage
         from .models.conge import Conge  # Nouveau modèle
         

@@ -119,11 +119,14 @@ function updateStatut(id, statut) {
     if (!confirm(`Êtes-vous sûr de vouloir ${action} cette demande ?`)) {
         return;
     }
-    
+    // Récupérer le token CSRF
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     fetch(`/conges/${id}/statut`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({ statut: statut })
     })

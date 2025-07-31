@@ -1,4 +1,4 @@
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from app import db
 from sqlalchemy import and_, func
 
@@ -16,11 +16,17 @@ class Pointage(db.Model):
 
     @classmethod
     def create_pointage(cls, user_id, type_pointage):
-        """Crée un nouveau pointage"""
+        """Crée un nouveau pointage avec validations"""
         try:
             now = datetime.now()
-            retard = False
+            today = now.date()
             
+            # Vérifier si on peut pointer ce type aujourd'hui
+            can_point, reason = cls.can_point_today(user_id, type_pointage)
+            if not can_point:
+                raise ValueError(reason)
+            
+            retard = False
             if type_pointage == "arrivee":
                 # Considérer comme retard si arrivée après 9h
                 if now.time() > time(9, 0):
@@ -29,7 +35,7 @@ class Pointage(db.Model):
             pointage = cls(
                 user_id=user_id,
                 type=type_pointage,
-                date=now.date(),
+                date=today,
                 heure=now.time(),
                 retard=retard
             )
@@ -40,6 +46,47 @@ class Pointage(db.Model):
             print(f"Erreur création pointage: {str(e)}")
             db.session.rollback()
             return None
+
+    @classmethod
+    def can_point_today(cls, user_id, type_pointage):
+        """Vérifie si on peut pointer ce type aujourd'hui"""
+        today = date.today()
+        
+        # Récupérer tous les pointages d'aujourd'hui pour cet utilisateur
+        pointages_aujourd_hui = cls.query.filter_by(
+            user_id=user_id,
+            date=today
+        ).order_by(cls.heure).all()
+        
+        # Compter les arrivées et départs
+        arrivees = [p for p in pointages_aujourd_hui if p.type == 'arrivee']
+        departs = [p for p in pointages_aujourd_hui if p.type == 'depart']
+        
+        if type_pointage == 'arrivee':
+            # Vérifier si on a déjà une arrivée aujourd'hui
+            if arrivees:
+                return False, "Vous avez déjà pointé votre arrivée aujourd'hui"
+            
+            # Vérifier si on a un départ sans arrivée (cas d'erreur)
+            if departs and not arrivees:
+                return False, "Erreur : départ enregistré sans arrivée"
+                
+        elif type_pointage == 'depart':
+            # Vérifier si on a une arrivée
+            if not arrivees:
+                return False, "Vous devez d'abord pointer votre arrivée"
+            
+            # Vérifier si on a déjà un départ
+            if departs:
+                return False, "Vous avez déjà pointé votre départ aujourd'hui"
+            
+            # Vérifier la durée minimale de travail (au moins 30 minutes)
+            derniere_arrivee = arrivees[-1]
+            duree_travail = datetime.combine(today, datetime.now().time()) - datetime.combine(today, derniere_arrivee.heure)
+            if duree_travail < timedelta(minutes=30):
+                return False, "Durée de travail minimale non respectée (30 minutes)"
+        
+        return True, "OK"
 
     @classmethod
     def get_pointages_jour(cls):

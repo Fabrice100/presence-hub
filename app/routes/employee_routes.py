@@ -47,7 +47,7 @@ def pointer():
         if not can_point:
             return jsonify({
                 'success': False,
-                'message': 'Pointage non autorisé pour le moment'
+                'message': type_pointage  # type_pointage contient la raison de l'échec
             })
 
         # Créer le pointage
@@ -55,6 +55,12 @@ def pointer():
             user_id=current_user.id,
             type_pointage=type_pointage
         )
+
+        if not pointage:
+            return jsonify({
+                'success': False,
+                'message': 'Erreur lors de la création du pointage'
+            })
 
         message = "Arrivée enregistrée" if type_pointage == "arrivee" else "Départ enregistré"
         if pointage.retard:
@@ -66,6 +72,11 @@ def pointer():
             'type': type_pointage
         })
 
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
     except Exception as e:
         return jsonify({
             'success': False,

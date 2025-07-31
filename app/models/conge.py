@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 
-class Conge(db.Model):
+class Conge(db.Model): 
     """Modèle pour les congés"""
     __tablename__ = 'conge'
     __table_args__ = {'extend_existing': True}

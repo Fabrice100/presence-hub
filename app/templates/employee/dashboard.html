@@ -200,10 +200,14 @@ updateTime();
 
 // Fonction de pointage
 function pointer() {
+    // Récupérer le token CSRF depuis le meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
     fetch('/employee/pointer', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
     })
     .then(response => response.json())
