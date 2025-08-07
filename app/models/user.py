@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db
@@ -396,3 +396,98 @@ class User(UserMixin, db.Model):
         except Exception as e:
             print(f"Erreur dans get_status_semaine: {e}")
             return "danger", "0% (erreur de calcul)"
+        
+    @staticmethod
+    def _calculate_duration_from_pointages(pointages, date_cible):
+        """Calcule la durée de travail à partir d'une liste de pointages"""
+        from datetime import datetime, timedelta
+        
+        if not pointages:
+            return None
+        
+        # Séparer les arrivées et départs
+        arrivees = [p for p in pointages if p.type == 'arrivee']
+        departs = [p for p in pointages if p.type == 'depart']
+        
+        if not arrivees:
+            return None
+        
+        # Prendre la première arrivée
+        heure_arrivee = arrivees[0].heure
+        
+        # Prendre le dernier départ s'il y en a
+        heure_depart = departs[-1].heure if departs else None
+        
+        if heure_arrivee and heure_depart:
+            dt_arrivee = datetime.combine(date_cible, heure_arrivee)
+            dt_depart = datetime.combine(date_cible, heure_depart)
+            duree = dt_depart - dt_arrivee
+            
+            # Limiter à 8h maximum par jour
+            duree_max = timedelta(hours=8)
+            if duree > duree_max:
+                duree = duree_max
+            
+            return duree
+        
+        return None
+
+    @staticmethod
+    def _calculate_weekly_duration_from_pointages(pointages, lundi, today):
+        """Calcule la durée hebdomadaire à partir d'une liste de pointages"""
+        from datetime import timedelta
+        
+        total = timedelta()
+        
+        # Grouper les pointages par jour
+        pointages_par_jour = {}
+        for p in pointages:
+            if p.date not in pointages_par_jour:
+                pointages_par_jour[p.date] = []
+            pointages_par_jour[p.date].append(p)
+        
+        # Calculer pour chaque jour de la semaine
+        for i in range((today - lundi).days + 1):
+            jour = lundi + timedelta(days=i)
+            if jour.weekday() < 5:  # 0=lundi, 4=vendredi
+                pointages_jour = pointages_par_jour.get(jour, [])
+                duree = User._calculate_duration_from_pointages(pointages_jour, jour)
+                if duree:
+                    total += duree
+        
+        return total
+
+    @staticmethod
+    def _calculate_monthly_duration_from_pointages(pointages, premier_mois, today):
+        """Calcule la durée mensuelle à partir d'une liste de pointages"""
+        from datetime import timedelta
+        
+        total = timedelta()
+        
+        # Grouper les pointages par jour
+        pointages_par_jour = {}
+        for p in pointages:
+            if p.date not in pointages_par_jour:
+                pointages_par_jour[p.date] = []
+            pointages_par_jour[p.date].append(p)
+        
+        # Calculer pour chaque jour du mois
+        current_date = premier_mois
+        while current_date <= today:
+            pointages_jour = pointages_par_jour.get(current_date, [])
+            duree = User._calculate_duration_from_pointages(pointages_jour, current_date)
+            if duree:
+                total += duree
+            current_date += timedelta(days=1)
+        
+        return total
+
+    @staticmethod
+    def _calculate_weekly_progression(total_heures):
+        """Calcule la progression hebdomadaire en pourcentage"""
+        if not total_heures:
+            return 0
+        
+        heures_attendues = timedelta(hours=40)  # 8h * 5 jours
+        progression = (total_heures.total_seconds() / heures_attendues.total_seconds()) * 100
+        return min(progression, 100)        

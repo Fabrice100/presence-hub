@@ -34,6 +34,8 @@ class Config:
     # Configuration de sécurité
     WTF_CSRF_ENABLED = True
     WTF_CSRF_TIME_LIMIT = 3600  # 1 heure
+    CACHE_DEFAULT_TIMEOUT = 300  # 5 minutes
+    CACHE_KEY_PREFIX = "presencehub_"
     
     # Configuration des tentatives de connexion
     MAX_LOGIN_ATTEMPTS = 5

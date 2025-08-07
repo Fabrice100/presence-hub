@@ -5,6 +5,7 @@ from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from .config import Config
 import logging
+from flask_caching import Cache
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +16,7 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 csrf = CSRFProtect()
+cache = Cache()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -33,6 +35,7 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+    cache.init_app(app)
     
     # Configuration du login manager
     login_manager.login_view = 'auth.login'

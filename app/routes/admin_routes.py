@@ -25,13 +25,32 @@ def dashboard():
         # Initialisation du formulaire de recherche
         search_form = SearchForm(request.args)
         
-        # Récupération des statistiques
-        total_employees = User.query.filter_by(role='employee').count()
+        # Récupération des statistiques avec une seule requête
+        from sqlalchemy import func, and_, or_, case
+        from datetime import date, timedelta
+        
+        today = date.today()
+        lundi = today - timedelta(days=today.weekday())
+        
+        # Statistiques optimisées
+        stats_query = db.session.query(
+            func.count(User.id).label('total'),
+            func.count(Pointage.id).label('presents'),
+            func.sum(case((Pointage.retard == True, 1), else_=0)).label('retards')
+        ).outerjoin(
+            Pointage, and_(
+                User.id == Pointage.user_id,
+                Pointage.date == today,
+                Pointage.type == 'arrivee'
+            )
+        ).filter(User.role == 'employee', User.is_active == True)
+        
+        stats_result = stats_query.first()
         stats = {
-            'total': total_employees,
-            'presents': Pointage.get_pointages_jour().count(),
-            'retards': Pointage.get_retards_jour(),
-            'absents': User.query.filter_by(role='employee', is_active=True).count() - Pointage.get_pointages_jour().count()
+            'total': stats_result.total or 0,
+            'presents': stats_result.presents or 0,
+            'retards': stats_result.retards or 0,
+            'absents': (stats_result.total or 0) - (stats_result.presents or 0)
         }
         
         # Construction de la requête de recherche
@@ -55,16 +74,58 @@ def dashboard():
         # Récupération des employés
         employees = query.order_by(User.nom).all()
         
-        # Calcul des durées travaillées pour chaque employé
-        durees = {e.id: e.get_duree_travail_jour() for e in employees}
-        totaux_semaine = {e.id: e.get_total_heures_semaine() for e in employees}
-        totaux_mois = {e.id: e.get_total_heures_mois() for e in employees}
+        # Optimisation : Récupération des données de pointage en une seule requête
+        employee_ids = [e.id for e in employees]
         
-        # Statistiques des alertes
+        if employee_ids:
+            # Pointages du jour pour tous les employés
+            pointages_jour = db.session.query(Pointage).filter(
+                Pointage.user_id.in_(employee_ids),
+                Pointage.date == today
+            ).all()
+            
+            # Pointages de la semaine pour tous les employés
+            pointages_semaine = db.session.query(Pointage).filter(
+                Pointage.user_id.in_(employee_ids),
+                Pointage.date >= lundi,
+                Pointage.date <= today
+            ).all()
+            
+            # Pointages du mois pour tous les employés
+            premier_mois = today.replace(day=1)
+            pointages_mois = db.session.query(Pointage).filter(
+                Pointage.user_id.in_(employee_ids),
+                Pointage.date >= premier_mois,
+                Pointage.date <= today
+            ).all()
+            
+            # Calcul optimisé des durées
+            durees = {}
+            totaux_semaine = {}
+            totaux_mois = {}
+            
+            for employee in employees:
+                # Pointages du jour pour cet employé
+                emp_pointages_jour = [p for p in pointages_jour if p.user_id == employee.id]
+                durees[employee.id] = User._calculate_duration_from_pointages(emp_pointages_jour, today)
+                
+                # Pointages de la semaine pour cet employé
+                emp_pointages_semaine = [p for p in pointages_semaine if p.user_id == employee.id]
+                totaux_semaine[employee.id] = User._calculate_weekly_duration_from_pointages(emp_pointages_semaine, lundi, today)
+                
+                # Pointages du mois pour cet employé
+                emp_pointages_mois = [p for p in pointages_mois if p.user_id == employee.id]
+                totaux_mois[employee.id] = User._calculate_monthly_duration_from_pointages(emp_pointages_mois, premier_mois, today)
+        else:
+            durees = {}
+            totaux_semaine = {}
+            totaux_mois = {}
+        
+        # Statistiques des alertes optimisées
         alertes = {
-            'incomplets': sum(1 for e in employees if not e.get_duree_travail_jour()),
-            'moins_8h': sum(1 for e in employees if e.get_duree_travail_jour() and (e.get_duree_travail_jour().seconds // 3600) < 8),
-            'semaine_retard': sum(1 for e in employees if e.get_progression_semaine() < 80)
+            'incomplets': sum(1 for e in employees if not durees.get(e.id)),
+            'moins_8h': sum(1 for e in employees if durees.get(e.id) and (durees[e.id].seconds // 3600) < 8),
+            'semaine_retard': sum(1 for e in employees if totaux_semaine.get(e.id) and User._calculate_weekly_progression(totaux_semaine[e.id]) < 80)
         }
         
         return render_template('admin/dashboard.html',
